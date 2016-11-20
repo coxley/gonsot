@@ -3,7 +3,6 @@ package conf
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"net/mail"
 	"net/url"
 )
@@ -29,13 +28,13 @@ type Config struct {
 // Marshalling implementation
 
 // AuthMethod is the type of authenticate we'll try to perform
-type AuthMethod int // noqa
+type AuthMethod int
 
 // Email is the email address to use to login
-type Email mail.Address
+type Email struct{ mail.Address }
 
 // URL is the base URL for an NSoT instance
-type URL url.URL
+type URL struct{ url.URL }
 
 //go:generate stringer -type=AuthMethod
 const (
@@ -62,13 +61,13 @@ func (e *Email) UnmarshalText(text []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	e.Address = addr.Address
-	return
+	*e = Email{*addr}
+	return nil
 }
 
 // MarshalText converts back to string form
 func (e *Email) MarshalText() (text []byte, err error) {
-	return []byte(e.Address), nil
+	return []byte(e.Address.Address), nil
 }
 
 // UnmarshalText validates before assigning
@@ -77,31 +76,11 @@ func (u *URL) UnmarshalText(text []byte) (err error) {
 	if err != nil {
 		return err
 	}
-
-	u.Scheme = url.Scheme
-	u.Opaque = url.Opaque
-	u.User = url.User
-	u.Host = url.Host
-	u.Path = url.Path
-	u.RawPath = url.RawPath
-	u.ForceQuery = url.ForceQuery
-	u.RawQuery = url.RawQuery
-	u.Fragment = url.Fragment
-	return
+	*u = URL{*url}
+	return nil
 }
 
 // MarshalText converts back to string form
 func (u *URL) MarshalText() (text []byte, err error) {
-	fmt.Println("DOOT")
-	var url url.URL
-	url.Scheme = u.Scheme
-	url.Opaque = u.Opaque
-	url.User = u.User
-	url.Host = u.Host
-	url.Path = u.Path
-	url.RawPath = u.RawPath
-	url.ForceQuery = u.ForceQuery
-	url.RawQuery = u.RawQuery
-	url.Fragment = u.Fragment
-	return []byte(url.String()), nil
+	return []byte(u.String()), nil
 }
