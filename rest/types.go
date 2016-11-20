@@ -1,6 +1,13 @@
 package rest
 
-import "net"
+import (
+	"net"
+	"time"
+
+	"github.com/coxley/gonsot/conf"
+)
+
+//go:generate ffjson $GOFILE
 
 // Site contains Site definition
 type Site struct {
@@ -8,6 +15,9 @@ type Site struct {
 	ID          int64
 	Name        string
 }
+
+// Sites contains multiple Sites
+type Sites []Site
 
 // Attribute contains Attribute definition
 type Attribute struct {
@@ -21,6 +31,9 @@ type Attribute struct {
 	ResourceName string `json:"resource_name"`
 	SiteID       int64  `json:"site_id"`
 }
+
+// Attributes contains multiple Attributes
+type Attributes []Attribute
 
 // Constraints contains Attribute Constraints
 type Constraints struct {
@@ -37,6 +50,9 @@ type Device struct {
 	SiteID     int64 `json:"site_id"`
 }
 
+// Devices contains multiple Devices
+type Devices []Device
+
 // Interface contains Interface definition
 type Interface struct {
 	Addresses   []IP
@@ -52,47 +68,20 @@ type Interface struct {
 	Type        int64
 }
 
+// Interfaces contains multiple Interfaces
+type Interfaces []Interface
+
 // IP is a wrapper around net.IP to provide (Un)Marshaling
 // ffjson: skip
 type IP struct{ net.IP }
-
-// UnmarshalJSON converts from []byte into meaningful type
-func (ip *IP) UnmarshalJSON(text []byte) (err error) {
-	addr, _, err := net.ParseCIDR(string(text))
-	if err != nil {
-		return err
-	}
-	*ip = IP{addr}
-	return nil
-}
 
 // HardwareAddr is a wrapper around net.HardwareAddr to provide (Un)Marshaling
 // ffjson: skip
 type HardwareAddr struct{ net.HardwareAddr }
 
-// UnmarshalJSON converts from []byte into meaningful type
-func (mac *HardwareAddr) UnmarshalJSON(text []byte) (err error) {
-	m, err := net.ParseMAC(string(text))
-	if err != nil {
-		return err
-	}
-	*mac = HardwareAddr{m}
-	return nil
-}
-
 // IPNet is a wrapper around net.IPNet to provide (Un)Marshaling
 // ffjson: skip
 type IPNet struct{ net.IPNet }
-
-// UnmarshalJSON converts from []byte into meaningful type
-func (n *IPNet) UnmarshalJSON(text []byte) (err error) {
-	_, net, err := net.ParseCIDR(string(text))
-	if err != nil {
-		return err
-	}
-	*n = IPNet{*net}
-	return nil
-}
 
 // Circuit contains Circuit definition
 type Circuit struct {
@@ -102,6 +91,9 @@ type Circuit struct {
 	Name       string
 	ZEndpoint  int64 `json:"z_endpoint"`
 }
+
+// Circuits contains multiple Circuits
+type Circuits []Circuit
 
 // Network contains Network definition
 type Network struct {
@@ -113,8 +105,23 @@ type Network struct {
 	ParentID       int64  `json:"parent_id"`
 	PrefixLength   int    `json:"prefix_length"`
 	SiteID         int64  `json:"site_id"`
-	State          string
+	State          State
 }
+
+// State represents Network resource state
+type State int
+
+//go:generate stringer -type=State
+//go:generate jsonenums -type=State
+const (
+	Allocated State = iota
+	Assigned
+	Orphaned
+	Reserved
+)
+
+// Networks contains multiple Networks
+type Networks []Network
 
 // Network returns net.IPNet
 func (n *Network) Network() net.IPNet {
@@ -131,10 +138,13 @@ func (n *Network) Network() net.IPNet {
 
 // User contains User definition
 type User struct {
-	Email       string
+	Email       conf.Email
 	ID          int64
 	Permissions Permissions
 }
+
+// Users contains multiple Users
+type Users []User
 
 // Permissions contains Permissions for a User
 type Permissions map[string]struct {
@@ -145,7 +155,7 @@ type Permissions map[string]struct {
 
 // Change contains Change definition
 type Change struct {
-	ChangeAt     int64 `json:"change_at"`
+	ChangeAt     time.Time `json:"change_at"`
 	Event        string
 	ID           int64
 	Resource     interface{}
@@ -154,6 +164,13 @@ type Change struct {
 	Site         Site
 	User         User
 }
+
+// Time is a wrapper around time.Time to provide (Un)Marshaling
+// ffjson: skip
+type Time struct{ time.Time }
+
+// Changes contains multiple Changes
+type Changes []Change
 
 // Value contains Value definition
 type Value struct {
@@ -164,3 +181,6 @@ type Value struct {
 	ResourceName string `json:"resource_name"`
 	Value        string
 }
+
+// Values contains multiple Values
+type Values []Value
