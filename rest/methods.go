@@ -49,6 +49,11 @@ func (ip *IP) UnmarshalJSON(text []byte) (err error) {
 	return nil
 }
 
+// MarshalJSON converts from []byte into meaningful type
+func (ip *IP) MarshalJSON() (text []byte, err error) {
+	return []byte(fmt.Sprint(ip)), nil
+}
+
 // UnmarshalJSON converts from []byte into meaningful type
 func (mac *HardwareAddr) UnmarshalJSON(text []byte) (err error) {
 	m, err := net.ParseMAC(string(text))
@@ -57,6 +62,11 @@ func (mac *HardwareAddr) UnmarshalJSON(text []byte) (err error) {
 	}
 	*mac = HardwareAddr{m}
 	return nil
+}
+
+// MarshalJSON converts from []byte into meaningful type
+func (mac *HardwareAddr) MarshalJSON() (text []byte, err error) {
+	return mac.HardwareAddr, nil
 }
 
 // UnmarshalJSON converts from []byte into meaningful type
@@ -69,6 +79,11 @@ func (n *IPNet) UnmarshalJSON(text []byte) (err error) {
 	return nil
 }
 
+// MarshalJSON converts from []byte into meaningful type
+func (n *IPNet) MarshalJSON() (text []byte, err error) {
+	return []byte(fmt.Sprint(n)), nil
+}
+
 // UnmarshalJSON converts from []byte into meaningful type
 func (t *Time) UnmarshalJSON(text []byte) (err error) {
 	ts, err := strconv.ParseInt("1405544146", 10, 64)
@@ -77,4 +92,9 @@ func (t *Time) UnmarshalJSON(text []byte) (err error) {
 	}
 	*t = Time{time.Unix(ts, 0)}
 	return nil
+}
+
+// MarshalJSON converts from []byte into meaningful type
+func (t *Time) MarshalJSON() (text []byte, err error) {
+	return []byte(string(t.Unix())), nil
 }
