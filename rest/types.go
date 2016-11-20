@@ -1,94 +1,166 @@
 package rest
 
+import "net"
+
+// Site contains Site definition
 type Site struct {
-	Name        string
 	Description string
-
-	// IDs
-	ID int
-}
-
-type Network struct {
-	Address string `json:network_address"`
-	// May be map[string]string or map[string][]string
-	Attributes   interface{}
-	IsIP         bool
-	PrefixLength int `json:prefix_length"`
-	State        string
-	Version      string
-
-	// IDs
-	ID       int
-	ParentID int `json:parent_id"`
-	SiteID   int `json:site_id"`
-}
-
-type Device struct {
-	// May be map[string]string or map[string][]string
-	Attributes interface{}
-	Hostname   string
-
-	// IDs
-	ID     int
-	SiteID int `json:site_id"`
-}
-
-type Interface struct {
-	Addresses []string
-	// May be map[string]string or map[string][]string
-	Attributes  interface{}
-	Description string
-	MacAddress  string `json:"mac_address"`
+	ID          int64
 	Name        string
-	Networks    []string
-	Speed       int
-	Type        int
-
-	// IDs
-	ID       int
-	Device   int `json:"device"`
-	ParentID int `json:"parent_id"`
 }
 
-type Circuit struct {
-	AEndpoint int `json:"a_endpoint"`
-	ZEndpoint int `json:"z_endpoint"`
-	Name      string
-	// May be map[string]string or map[string][]string
-	Attributes interface{}
-
-	//IDs
-	ID int
-}
-
+// Attribute contains Attribute definition
 type Attribute struct {
 	Constraints  Constraints
 	Description  string
 	Display      bool
+	ID           int64
 	Multi        bool
 	Name         string
 	Required     bool
 	ResourceName string `json:"resource_name"`
-
-	// IDs
-	ID     int
-	SiteID int `json:site_id"`
+	SiteID       int64  `json:"site_id"`
 }
 
+// Constraints contains Attribute Constraints
 type Constraints struct {
+	AllowEmpty  bool `json:"allow_empty"`
 	Pattern     string
-	ValidValues []string `json:"valid_values"`
-	AllowEmpty  bool     `json:"allow_empty"`
+	ValidValues []interface{} `json:"valid_values"`
 }
 
+// Device contains Device definition
+type Device struct {
+	Attributes map[string]string
+	Hostname   string
+	ID         int64
+	SiteID     int64 `json:"site_id"`
+}
+
+// Interface contains Interface definition
+type Interface struct {
+	Addresses   []IP
+	Attributes  map[string]string
+	Description string
+	Device      int64
+	ID          int64
+	MacAddress  HardwareAddr `json:"mac_address"`
+	Name        string
+	Networks    []IPNet
+	ParentID    int64 `json:"parent_id"`
+	Speed       int64
+	Type        int64
+}
+
+// IP is a wrapper around net.IP to provide (Un)Marshaling
+// ffjson: skip
+type IP struct{ net.IP }
+
+// UnmarshalJSON converts from []byte into meaningful type
+func (ip *IP) UnmarshalJSON(text []byte) (err error) {
+	addr, _, err := net.ParseCIDR(string(text))
+	if err != nil {
+		return err
+	}
+	*ip = IP{addr}
+	return nil
+}
+
+// HardwareAddr is a wrapper around net.HardwareAddr to provide (Un)Marshaling
+// ffjson: skip
+type HardwareAddr struct{ net.HardwareAddr }
+
+// UnmarshalJSON converts from []byte into meaningful type
+func (mac *HardwareAddr) UnmarshalJSON(text []byte) (err error) {
+	m, err := net.ParseMAC(string(text))
+	if err != nil {
+		return err
+	}
+	*mac = HardwareAddr{m}
+	return nil
+}
+
+// IPNet is a wrapper around net.IPNet to provide (Un)Marshaling
+// ffjson: skip
+type IPNet struct{ net.IPNet }
+
+// UnmarshalJSON converts from []byte into meaningful type
+func (n *IPNet) UnmarshalJSON(text []byte) (err error) {
+	_, net, err := net.ParseCIDR(string(text))
+	if err != nil {
+		return err
+	}
+	*n = IPNet{*net}
+	return nil
+}
+
+// Circuit contains Circuit definition
+type Circuit struct {
+	AEndpoint  int64 `json:"a_endpoint"`
+	Attributes map[string]string
+	ID         int64
+	Name       string
+	ZEndpoint  int64 `json:"z_endpoint"`
+}
+
+// Network contains Network definition
+type Network struct {
+	Attributes     map[string]string
+	ID             int64
+	IPVersion      string `json:"ip_version"`
+	IsIP           bool   `json:"is_ip"`
+	NetworkAddress IP     `json:"network_address"`
+	ParentID       int64  `json:"parent_id"`
+	PrefixLength   int    `json:"prefix_length"`
+	SiteID         int64  `json:"site_id"`
+	State          string
+}
+
+// Network returns net.IPNet
+func (n *Network) Network() net.IPNet {
+	var mask net.IPMask
+	ip := n.NetworkAddress
+	switch ip.To16() {
+	default:
+		mask = net.CIDRMask(n.PrefixLength, 8*net.IPv6len)
+	case nil:
+		mask = net.CIDRMask(n.PrefixLength, 8*net.IPv4len)
+	}
+	return net.IPNet{IP: ip.IP, Mask: mask}
+}
+
+// User contains User definition
 type User struct {
-	ID          int
 	Email       string
-	Permissions map[string]Permission
+	ID          int64
+	Permissions Permissions
 }
 
-type Permission struct {
-	UserID      string `json:"user_id"`
-	SiteID      string `json:"site_id"`
+// Permissions contains Permissions for a User
+type Permissions map[string]struct {
 	Permissions []string
+	SiteID      int64 `json:"site_id"`
+	UserID      int64 `json:"user_id"`
+}
+
+// Change contains Change definition
+type Change struct {
+	ChangeAt     int64 `json:"change_at"`
+	Event        string
+	ID           int64
+	Resource     interface{}
+	ResourceID   int64  `json:"resource_id"`
+	ResourceName string `json:"resource_name"`
+	Site         Site
+	User         User
+}
+
+// Value contains Value definition
+type Value struct {
+	Attribute    int64
+	ID           int64
+	Name         string
+	ResourceID   int64  `json:"resource_id"`
+	ResourceName string `json:"resource_name"`
+	Value        string
 }

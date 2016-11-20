@@ -4,18 +4,19 @@ package conf
 import (
 	"errors"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/go-ini/ini"
-	"github.com/serenize/snaker"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/BurntSushi/toml"
+	"github.com/go-ini/ini"
+	"github.com/serenize/snaker"
 )
 
 var (
-	HOME     = os.Getenv("HOME")
-	SYS_CFG  = filepath.Join("/etc", "gonsot.toml")
-	USER_CFG = filepath.Join(HOME, ".gonsot.toml")
+	home    = os.Getenv("HOME")
+	sysCFG  = filepath.Join("/etc", "gonsot.toml")
+	userCFG = filepath.Join(home, ".gonsot.toml")
 )
 
 // loadTOML loads configs that can be at two locations, listed in
@@ -27,18 +28,18 @@ func (c *Config) loadTOML() error {
 	var userErr error
 
 	// Try opening system-level config, mapping to *Config if it works
-	if _, err := toml.DecodeFile(SYS_CFG, c); err != nil {
+	if _, err := toml.DecodeFile(sysCFG, c); err != nil {
 		systemErr = err
 	}
 
 	// Try opening user-level config and map to *Config. Should overwrite
 	// values added by system and this is desired to merge
-	if _, err := toml.DecodeFile(USER_CFG, c); err != nil {
+	if _, err := toml.DecodeFile(userCFG, c); err != nil {
 		userErr = err
 	}
 
 	if systemErr != nil && userErr != nil {
-		msg := fmt.Sprintf("Failed to open and validate files: %s %s", USER_CFG, SYS_CFG)
+		msg := fmt.Sprintf("Failed to open and validate files: %s %s", userCFG, sysCFG)
 		return errors.New(msg)
 	}
 	return nil
@@ -47,7 +48,7 @@ func (c *Config) loadTOML() error {
 // convertINI converts pynsot config to gonsot
 func convertINI() (err error) {
 	p := filepath.Join("/etc", "pynsotrc") // Parent
-	c := filepath.Join(HOME, ".pynsotrc")  // Child
+	c := filepath.Join(home, ".pynsotrc")  // Child
 
 	cfg, err := ini.LooseLoad(p, c) // `c` has higher merge pri over `p`
 	if err != nil {
