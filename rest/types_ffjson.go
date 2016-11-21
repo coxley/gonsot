@@ -2488,10 +2488,15 @@ func (mj *Interface) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			if i != 0 {
 				buf.WriteString(`,`)
 			}
-			/* Struct fall back. type=rest.IP kind=struct */
-			err = buf.Encode(&v)
-			if err != nil {
-				return err
+
+			{
+
+				obj, err = v.MarshalJSON()
+				if err != nil {
+					return err
+				}
+				buf.Write(obj)
+
 			}
 		}
 		buf.WriteString(`]`)
@@ -2517,11 +2522,16 @@ func (mj *Interface) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	fflib.FormatBits2(buf, uint64(mj.Device), 10, mj.Device < 0)
 	buf.WriteString(`,"ID":`)
 	fflib.FormatBits2(buf, uint64(mj.ID), 10, mj.ID < 0)
-	/* Struct fall back. type=rest.HardwareAddr kind=struct */
 	buf.WriteString(`,"mac_address":`)
-	err = buf.Encode(&mj.MacAddress)
-	if err != nil {
-		return err
+
+	{
+
+		obj, err = mj.MacAddress.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		buf.Write(obj)
+
 	}
 	buf.WriteString(`,"Name":`)
 	fflib.WriteJsonString(buf, string(mj.Name))
@@ -2532,10 +2542,15 @@ func (mj *Interface) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			if i != 0 {
 				buf.WriteString(`,`)
 			}
-			/* Struct fall back. type=rest.IPNet kind=struct */
-			err = buf.Encode(&v)
-			if err != nil {
-				return err
+
+			{
+
+				obj, err = v.MarshalJSON()
+				if err != nil {
+					return err
+				}
+				buf.Write(obj)
+
 			}
 		}
 		buf.WriteString(`]`)
@@ -3412,11 +3427,16 @@ func (mj *Network) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	} else {
 		buf.WriteString(`,"is_ip":false`)
 	}
-	/* Struct fall back. type=rest.IP kind=struct */
 	buf.WriteString(`,"network_address":`)
-	err = buf.Encode(&mj.NetworkAddress)
-	if err != nil {
-		return err
+
+	{
+
+		obj, err = mj.NetworkAddress.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		buf.Write(obj)
+
 	}
 	buf.WriteString(`,"parent_id":`)
 	fflib.FormatBits2(buf, uint64(mj.ParentID), 10, mj.ParentID < 0)
@@ -3425,16 +3445,7 @@ func (mj *Network) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	buf.WriteString(`,"site_id":`)
 	fflib.FormatBits2(buf, uint64(mj.SiteID), 10, mj.SiteID < 0)
 	buf.WriteString(`,"State":`)
-
-	{
-
-		obj, err = mj.State.MarshalJSON()
-		if err != nil {
-			return err
-		}
-		buf.Write(obj)
-
-	}
+	fflib.WriteJsonString(buf, string(mj.State))
 	buf.WriteByte('}')
 	return nil
 }
@@ -4033,25 +4044,25 @@ handle_SiteID:
 
 handle_State:
 
-	/* handler: uj.State type=rest.State kind=int quoted=false*/
+	/* handler: uj.State type=string kind=string quoted=false*/
 
 	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
 		if tok == fflib.FFTok_null {
 
-			state = fflib.FFParse_after_value
-			goto mainparse
-		}
+		} else {
 
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
-		}
+			outBuf := fs.Output.Bytes()
 
-		err = uj.State.UnmarshalJSON(tbuf)
-		if err != nil {
-			return fs.WrapErr(err)
+			uj.State = string(string(outBuf))
+
 		}
-		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value

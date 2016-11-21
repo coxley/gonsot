@@ -2,7 +2,6 @@
 package conf
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/go-ini/ini"
+	"github.com/pkg/errors"
 	"github.com/serenize/snaker"
 )
 
@@ -40,7 +40,8 @@ func (c *Config) loadTOML() error {
 
 	if systemErr != nil && userErr != nil {
 		msg := fmt.Sprintf("Failed to open and validate files: %s %s", userCFG, sysCFG)
-		return errors.New(msg)
+		err := errors.New(msg)
+		return errors.Wrap(err, "Failed to load TOML")
 	}
 	return nil
 }

@@ -2,9 +2,10 @@ package conf
 
 import (
 	"bytes"
-	"errors"
 	"net/mail"
 	"net/url"
+
+	"github.com/pkg/errors"
 )
 
 // Config represents settings needed to connect to an NSoT server
@@ -50,7 +51,8 @@ func (a *AuthMethod) UnmarshalText(text []byte) (err error) {
 	case bytes.Equal(text, []byte("auth_token")):
 		*a = AuthToken
 	default:
-		return errors.New("AuthMethod not in acceptable values")
+		err := errors.New("AuthMethod not in acceptable values")
+		return errors.Wrap(err, "Failed Unmarshaling AuthMethod")
 	}
 	return nil
 }

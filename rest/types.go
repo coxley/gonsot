@@ -9,6 +9,15 @@ import (
 
 //go:generate ffjson $GOFILE
 
+// Resource defines common methods that the resources should have
+type Resource interface {
+	Plural() string
+	GetAll() ([]Resource, error)
+}
+
+// Resources contains multiple Resources
+type Resources []Resource
+
 // Site contains Site definition
 type Site struct {
 	Description string
@@ -105,20 +114,23 @@ type Network struct {
 	ParentID       int64  `json:"parent_id"`
 	PrefixLength   int    `json:"prefix_length"`
 	SiteID         int64  `json:"site_id"`
-	State          State
+	State          string
 }
 
-// State represents Network resource state
-type State int
+// Would like to use enum for representing State but there are issues with
+// jsonenums because it's Case Sensitive
 
-//go:generate stringer -type=State
-//go:generate jsonenums -type=State
-const (
-	Allocated State = iota
-	Assigned
-	Orphaned
-	Reserved
-)
+// State represents Network resource state
+// type State int
+
+//goxx:generate stringer -type=State
+//goxx:generate jsonenums -type=State
+// const (
+// 	Allocated State = iota
+// 	Assigned
+// 	Orphaned
+// 	Reserved
+// )
 
 // Networks contains multiple Networks
 type Networks []Network

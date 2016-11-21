@@ -2,21 +2,39 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"github.com/coxley/gonsot/conf"
+
+	"github.com/coxley/gonsot/rest"
 )
 
-func main() {
-	c := conf.Config{}
-	err := c.Load()
-	if err != nil {
-		panic(err)
-	} else {
-		msg := "THIS IS TEMPORARY BINARY FOR DEBUGGING"
-		line := strings.Repeat("=", len(msg))
-		fmt.Println(msg + "\n" + line + "\n")
-		fmt.Printf("Config: %+v\n", c)
+func printAll() {
+	var rs = make([]rest.Resource, 8)
+	rs = []rest.Resource{
+		&rest.Site{},
+		&rest.Attribute{},
+		&rest.Device{},
+		&rest.Circuit{},
+		&rest.Interface{},
+		&rest.Network{},
+		&rest.User{},
 	}
+	for _, r := range rs {
+		go func(res rest.Resource) {
+			all, err := res.GetAll()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("Number of resources: %d", len(all))
+			for val := range all {
+				fmt.Printf("%+v\n", val)
+			}
+			fmt.Println()
+		}(r)
+	}
+}
 
-	c.Dump("/tmp/testconfig")
+func main() {
+	fmt.Println("Starting")
+	printAll()
+	fmt.Println("Done")
+
 }
