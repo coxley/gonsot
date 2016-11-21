@@ -302,7 +302,13 @@ func (mac *HardwareAddr) MarshalJSON() (text []byte, err error) {
 
 // UnmarshalJSON converts from []byte into meaningful type
 func (n *IPNet) UnmarshalJSON(text []byte) (err error) {
-	_, net, err := net.ParseCIDR(string(text))
+	// For some reason, text contains the quotes from JSON
+	var s string
+	if s, err = strconv.Unquote(string(text)); err != nil {
+		s = string(text)
+	}
+
+	_, net, err := net.ParseCIDR(s)
 	if err != nil {
 		return err
 	}
