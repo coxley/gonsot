@@ -12,9 +12,9 @@ import (
 
 var cfg *conf.Config
 
+var client = &http.Client{Timeout: time.Second * 10}
+
 func getClient() *http.Client {
-	var client = new(http.Client)
-	client = &http.Client{Timeout: time.Second * 10}
 	return client
 }
 
